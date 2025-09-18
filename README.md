@@ -21,5 +21,5 @@ sudo ovs-ofctl dump-flows s1
 
 
 ## OBIETTIVI
-[] Aggiungere Whitelist
-[] Aumentare la modularità
+- [ ] Aggiungere Whitelist
+- [ ] Aumentare la modularità

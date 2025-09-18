@@ -18,3 +18,8 @@ iperf -c 10.0.0.3 -p 5002 -t 20 -b 2M -i 1
 
 ## Verifica delle regole installate
 sudo ovs-ofctl dump-flows s1
+
+
+## OBIETTIVI
+[] Aggiungere Whitelist
+[] Aumentare la modularità

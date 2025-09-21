@@ -21,7 +21,7 @@ sudo ovs-ofctl dump-flows s1
 
 
 ## OBIETTIVI
-1) Overblocking
+1) Over blocking
    - [ ] Aggiungere Whitelist
 2) Static Threshold
    - [ ] Soglia adattiva (percentile)
@@ -34,8 +34,6 @@ sudo ovs-ofctl dump-flows s1
 
 
 ## Obiettivo Alternativo (al posto di 2 o 5)
-Certo 🙂 ecco la traduzione dell’**obiettivo alternativo** che avevi proposto:
-
 ### **Rilevamento limitato ai pattern classici di DoS**
 
 * **Difetto**: vengono rilevati solo attacchi DoS ad alto throughput e a tasso costante.

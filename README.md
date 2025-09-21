@@ -21,5 +21,13 @@ sudo ovs-ofctl dump-flows s1
 
 
 ## OBIETTIVI
-- [ ] Aggiungere Whitelist
-- [ ] Aumentare la modularità
+1) Overblocking
+   - [ ] Aggiungere Whitelist
+2) Static Threshold
+   - [ ] Soglia adattiva (percentile)
+3) Controller-Centric Blocking Decisions
+   - [ ] Aumentare la modularità con strutture dati condivise per permettere a moduli esterni o admin di contribuire alle policies
+4) Lack of Modular Detection and Mitigation Design
+   - [ ] Separazione tra le varie operazioni e funzionalità del controller (già c'è ma può essere migliorato)
+5) Inflexible Blocking/Unblocking Policy
+   - [ ] exponential backoff (già c'è)

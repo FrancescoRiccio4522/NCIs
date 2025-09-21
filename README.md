@@ -1,5 +1,12 @@
 # NCIs
 
+## Requirements *(TO DO)*
+numpy
+scikit-learn
+sqlite3  # già incluso in Python
+matplotlib
+sudo docker run --rm -it --net=host my-ryu-app
+
 ## Comandi h3 
 ### Connessione UDP al server alla porta di default 5001.
 

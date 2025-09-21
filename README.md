@@ -31,3 +31,14 @@ sudo ovs-ofctl dump-flows s1
    - [ ] Separazione tra le varie operazioni e funzionalità del controller (già c'è ma può essere migliorato)
 5) Inflexible Blocking/Unblocking Policy
    - [ ] exponential backoff (già c'è)
+
+
+## Obiettivo Alternativo (al posto di 2 o 5)
+Certo 🙂 ecco la traduzione dell’**obiettivo alternativo** che avevi proposto:
+
+### **Rilevamento limitato ai pattern classici di DoS**
+
+* **Difetto**: vengono rilevati solo attacchi DoS ad alto throughput e a tasso costante.
+* **Problema**: la strategia di rilevamento e mitigazione è progettata per un singolo attaccante, ma fallisce contro attacchi **stealthy** (a bitrate variabile) o **DDoS distribuiti e bursty**.
+* **Possibile soluzione**: simulare diversi pattern di attacco e rilevarli utilizzando metriche aggiuntive, come la **varianza dei burst** e gli **intervalli tra i flussi**.
+

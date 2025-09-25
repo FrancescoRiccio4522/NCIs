@@ -35,7 +35,11 @@ class SDNController(app_manager.RyuApp):
         shared_data.host_info = data.get("host_info", {})
         
         # Inizializza moduli separati
-        self.policy_engine = PolicyEngine(var_threshold=self.VAR_THRESHOLD)
+        self.policy_engine = PolicyEngine(
+            var_threshold=self.VAR_THRESHOLD,
+            percentile=95,           
+            percentile_multiplier=1.2 
+        )   
         self.flow_enforcer = FlowEnforcer(self)  # Passa self per logger e block_udp_flow
         self.traffic_monitor = TrafficMonitor(self.SLEEP_TIME)  # Non passa più self
 

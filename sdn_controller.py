@@ -108,9 +108,9 @@ class SDNController(app_manager.RyuApp):
             key = f"{dpid}-{port}"
             if suspicious and key in self.host_info and key not in self.flow_enforcer.blocked:  #se un host e' sospetto e il suo IP(key) si trova nel json ma non risulta bloccato allora viene contrassegnato come un "attacker"
                 attacker = self.host_info[key]
-                self.flow_enforcer.block_counts[key] += 1   #viene incrementato il contatore dei blocchi dell'host con quel determineto IP 
+                self.flow_enforcer.block_counts[key] += 1   # Viene incrementato il contatore dei blocchi dell'host con quel determineto IP 
                 num_blocks = self.flow_enforcer.block_counts[key]
-                unblock_delay = min(2 ** num_blocks * self.BASE_DELAY, self.MAX_DELAY)  #backoff esponenziale per lo sblocco del traffico
+                unblock_delay = min(2 ** num_blocks * self.BASE_DELAY, self.MAX_DELAY)  # Backoff esponenziale per lo sblocco del traffico
                 self.flow_enforcer.block(dp, key, attacker['ip'], unblock_delay)
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -126,7 +126,7 @@ class SDNController(app_manager.RyuApp):
         dp.send_msg(mod)
         self.logger.info(f"[+] Switch registrato: {dp.id}")
 
-    def block_udp_flow(self, dp, src_ip, dst_ip):   #funzione per installare la regola di blocco sullo switch
+    def block_udp_flow(self, dp, src_ip, dst_ip):   # Funzione per installare la regola di blocco sullo switch
         parser = dp.ofproto_parser
         ofproto = dp.ofproto
         match = parser.OFPMatch(eth_type=0x0800, ip_proto=17, ipv4_src=src_ip, ipv4_dst=dst_ip)
@@ -137,7 +137,7 @@ class SDNController(app_manager.RyuApp):
         self.logger.info(f"[BLOCKLIST] Rule installed on switch {dp.id} for {src_ip} → {dst_ip}")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
-    def _packet_in_handler(self, ev):   #funzione che serve per gestire i pacchetti in ingresso
+    def _packet_in_handler(self, ev):   # Funzione che serve per gestire i pacchetti in ingresso
         msg = ev.msg
         dp = msg.datapath
         parser = dp.ofproto_parser
@@ -148,7 +148,7 @@ class SDNController(app_manager.RyuApp):
         dpid = dp.id
         self.mac_to_port.setdefault(dpid, {})[eth.src] = in_port
         out_port = self.mac_to_port[dpid].get(eth.dst, ofproto.OFPP_FLOOD)
-        actions = [parser.OFPActionOutput(out_port)]    #prepara le azioni per inoltrare il pacchetto:
+        actions = [parser.OFPActionOutput(out_port)]    # Prepara le azioni per inoltrare il pacchetto:
         if out_port != ofproto.OFPP_FLOOD:
             match = parser.OFPMatch(in_port=in_port, eth_dst=eth.dst, eth_src=eth.src)
             inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
@@ -157,7 +157,7 @@ class SDNController(app_manager.RyuApp):
         dp.send_msg(parser.OFPPacketOut(datapath=dp, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data))
 
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, CONFIG_DISPATCHER])
-    def state_change_handler(self, ev): #funzione che tiene traccia degli switch attivi e disconessi
+    def state_change_handler(self, ev): # Funzione che tiene traccia degli switch attivi e disconessi
         dp = ev.datapath
         if ev.state == MAIN_DISPATCHER:
             self.datapaths[dp.id] = dp

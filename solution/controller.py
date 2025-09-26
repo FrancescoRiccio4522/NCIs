@@ -31,15 +31,11 @@ class SDNController(app_manager.RyuApp):
         self.mac_to_port = {}  # Manteniamo questo qui perché specifico del learning switch
         
         # Carica host info in shared_data invece che in self
-        data = self.load_host_info_json("config/host_info.json")
+        data = self.load_host_info_json("host_info.json")
         shared_data.host_info = data.get("host_info", {})
         
         # Inizializza moduli separati
-        self.policy_engine = PolicyEngine(
-            var_threshold=self.VAR_THRESHOLD,
-            percentile=95,           
-            percentile_multiplier=1.2 
-        )   
+        self.policy_engine = PolicyEngine(var_threshold=self.VAR_THRESHOLD)
         self.flow_enforcer = FlowEnforcer(self)  # Passa self per logger e block_udp_flow
         self.traffic_monitor = TrafficMonitor(self.SLEEP_TIME)  # Non passa più self
 

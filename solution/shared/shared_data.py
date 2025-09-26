@@ -24,12 +24,12 @@ class SharedData:
         return key in self.blocked or key in self.external_blocks
     
     def add_external_block(self, key, reason="external"):
-        """NOVITÀ: Permette a moduli esterni di bloccare"""
+        """Permette a moduli esterni di bloccare"""
         self.external_blocks.add(key)
         print(f"[EXTERNAL BLOCK] {key} - {reason}")
     
     def remove_external_block(self, key):
-        """NOVITÀ: Rimozione blocchi esterni"""
+        """Rimozione blocchi esterni"""
         self.external_blocks.discard(key)
         print(f"[EXTERNAL UNBLOCK] {key}")
     

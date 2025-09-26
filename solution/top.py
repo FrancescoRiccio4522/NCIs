@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from mininet.log import setLogLevel, info
 from mininet.net import Mininet, CLI
-from mininet.node import RemoteController  # Importiamo il controller 
+from mininet.node import RemoteController  # Import del controller
 from mininet.link import TCLink
 
 class Environment(object):
@@ -11,7 +11,7 @@ class Environment(object):
 
         try: 
             info("*** Starting controller\n")
-            self.net.addController('C1', controller = RemoteController, port = 6633)  # <--- controller definito da noi
+            self.net.addController('C1', controller = RemoteController, port = 6633) 
             
 
             info("*** Adding hosts\n")
@@ -27,11 +27,15 @@ class Environment(object):
             self.s4 = self.net.addSwitch('s4')
 
             info("*** Adding links\n")  
-            self.net.addLink(self.h1, self.s1, bw = 10, delay = '2ms') ## usiamo una larghezza di banda costante, pari a 10 per i link tra gli host e gli switch
+            
+            # Collegamenti host - switch (larghezza di banda 10)            
+            self.net.addLink(self.h1, self.s1, bw = 10, delay = '2ms')
             self.net.addLink(self.h4, self.s1, bw = 10, delay = '2ms')
             self.net.addLink(self.h2, self.s2, bw = 10, delay = '2ms')
             self.net.addLink(self.h3, self.s4, bw = 10, delay = '2ms')
-            self.net.addLink(self.s1, self.s3, bw = 15, delay = '25ms')  # usiamo una larghezza di banda costante, pari a 15 per i link tra gli switch
+
+            # Collegamenti tra switch (larghezza di banda 15)
+            self.net.addLink(self.s1, self.s3, bw = 15, delay = '25ms') 
             self.net.addLink(self.s2, self.s3, bw = 15, delay = '25ms')
             self.net.addLink(self.s4, self.s3, bw = 15, delay = '25ms')
 

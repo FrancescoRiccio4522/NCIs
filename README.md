@@ -5,7 +5,17 @@ numpy
 scikit-learn
 sqlite3  # già incluso in Python
 matplotlib
+
+# Docker
+Bisogna buildare due immagini: una per la topologia top.py e una per la topologia complex_top.py, per farlo si utilizza:
+sudo docker build -t ryu-top . 
+sudo docker build -t ryu-complex-top .
+
+Per avviare il controller:
 sudo docker run --rm -it --net=host my-ryu-app
+
+Per rimuovere l'immagine
+sudo docker system prune -a
 
 ## Comandi h3 
 ### Connessione UDP al server alla porta di default 5001.

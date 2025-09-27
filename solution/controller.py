@@ -95,16 +95,38 @@ class SDNController(app_manager.RyuApp):
         dp.send_msg(mod)
         self.logger.info(f"[+] Switch registrato: {dp.id}")
 
-    def block_udp_flow(self, dp, src_ip, dst_ip):
-        """IDENTICO all'originale - FlowEnforcer chiama questa funzione"""
+    def block_udp_flow(self, dp, src_ip, dst_ip, dst_port=None):
+        """
+        Blocca traffico UDP con granularità a livello di flusso.
+        Se dst_port è specificata, blocca solo quel flusso specifico.
+        Altrimenti mantiene il comportamento originale (blocco totale).
+        """
         parser = dp.ofproto_parser
         ofproto = dp.ofproto
-        match = parser.OFPMatch(eth_type=0x0800, ip_proto=17, ipv4_src=src_ip, ipv4_dst=dst_ip)
+        
+        # Costruisce il match con granularità opzionale
+        match_fields = {
+            'eth_type': 0x0800,
+            'ip_proto': 17,
+            'ipv4_src': src_ip,
+            'ipv4_dst': dst_ip
+        }
+        
+        # Aggiunge granularità per porta di destinazione se specificata
+        if dst_port:
+            match_fields['udp_dst'] = dst_port
+            
+        match = parser.OFPMatch(**match_fields)
         actions = []
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         mod = parser.OFPFlowMod(datapath=dp, priority=20, match=match, instructions=inst)
         dp.send_msg(mod)
-        self.logger.info(f"[BLOCKLIST] Rule installed on switch {dp.id} for {src_ip} → {dst_ip}")
+        
+        # Log con informazioni sulla granularità
+        if dst_port:
+            self.logger.info(f"[BLOCKLIST] Flow-specific rule installed on switch {dp.id} for {src_ip} → {dst_ip}:{dst_port}")
+        else:
+            self.logger.info(f"[BLOCKLIST] Rule installed on switch {dp.id} for {src_ip} → {dst_ip}")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):

@@ -8,8 +8,8 @@ matplotlib
 
 # Docker
 Bisogna buildare due immagini: una per la topologia top.py e una per la topologia complex_top.py, per farlo si utilizza:
-sudo docker build -t ryu-top . 
-sudo docker build -t ryu-complex-top .
+- sudo docker build -t ryu-top . 
+- sudo docker build -t ryu-complex-top .
 
 Per avviare il controller:
 sudo docker run --rm -it --net=host my-ryu-app

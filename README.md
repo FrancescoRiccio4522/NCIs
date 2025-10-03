@@ -1,15 +1,9 @@
 # NCIs
 
-## Requirements *(TO DO)*
-numpy
-scikit-learn
-sqlite3  # già incluso in Python
-matplotlib
-
-# Docker
+## Docker
 Bisogna buildare due immagini: una per la topologia top.py e una per la topologia complex_top.py, per farlo si utilizza:
-sudo docker build -t ryu-top . 
-sudo docker build -t ryu-complex-top .
+- sudo docker build -t ryu-top . 
+- sudo docker build -t ryu-complex-top .
 
 Per avviare il controller:
 sudo docker run --rm -it --net=host my-ryu-app
@@ -41,19 +35,13 @@ sudo ovs-ofctl dump-flows s1
 1) Over blocking
    - [ ] Aggiungere Whitelist
 2) Static Threshold
-   - [ ] Soglia adattiva (percentile)
+   - [ ] Soglia adattiva
 3) Controller-Centric Blocking Decisions
    - [ ] Aumentare la modularità con strutture dati condivise per permettere a moduli esterni o admin di contribuire alle policies
 4) Lack of Modular Detection and Mitigation Design
-   - [ ] Separazione tra le varie operazioni e funzionalità del controller (già c'è ma può essere migliorato)
+   - [ ] Separazione tra le varie operazioni e funzionalità del controller
 5) Inflexible Blocking/Unblocking Policy
-   - [ ] exponential backoff (già c'è)
-
-
-## Obiettivo Alternativo (al posto di 2 o 5)
-### **Rilevamento limitato ai pattern classici di DoS**
-
-* **Difetto**: vengono rilevati solo attacchi DoS ad alto throughput e a tasso costante.
-* **Problema**: la strategia di rilevamento e mitigazione è progettata per un singolo attaccante, ma fallisce contro attacchi **stealthy** (a bitrate variabile) o **DDoS distribuiti e bursty**.
-* **Possibile soluzione**: simulare diversi pattern di attacco e rilevarli utilizzando metriche aggiuntive, come la **varianza dei burst** e gli **intervalli tra i flussi**.
+   - [ ] Exponential backoff
+6) Topology Sensitivity
+   - [ ] Test con una topologia con 10 switches
 

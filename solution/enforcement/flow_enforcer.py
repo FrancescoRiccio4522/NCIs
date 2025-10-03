@@ -9,10 +9,6 @@ class FlowEnforcer:
     def __init__(self, controller):
         # Manteniamo il riferimento al controller per block_udp_flow() e logger
         self.controller = controller
-        
-        # RIMOSSO: self.blocked = set() 
-        # RIMOSSO: self.block_counts = defaultdict(int)
-        # Ora sono in shared_data!
 
     def block(self, dp, key, attacker_ip, unblock_delay):
         """

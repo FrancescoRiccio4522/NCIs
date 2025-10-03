@@ -27,7 +27,6 @@ class SDNController(app_manager.RyuApp):
         super().__init__(*args, **kwargs)
         self.logger.setLevel(logging.INFO)
         
-        # RIMOSSO: self.datapaths = {} (ora in shared_data)
         self.mac_to_port = {}  # Manteniamo questo qui perché specifico del learning switch
         
         # Carica host info in shared_data invece che in self
@@ -40,17 +39,26 @@ class SDNController(app_manager.RyuApp):
         self.traffic_monitor = TrafficMonitor(self.SLEEP_TIME)  # Non passa più self
 
     def load_host_info_json(self, path):
-        """IDENTICO all'originale"""
         with open(path) as f:
             return json.load(f)
 
+    def format_bps(self, bps):
+        """Formatta bandwidth con unità appropriate"""
+        if bps >= 1e9:
+            return f"{bps/1e9:.2f} Gbps"
+        elif bps >= 1e6:
+            return f"{bps/1e6:.2f} Mbps"
+        elif bps >= 1e3:
+            return f"{bps/1e3:.2f} Kbps"
+        else:
+            return f"{bps:.2f} bps"
+
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def port_stats_reply_handler(self, ev):
-        """
-        QUASI identico, ma usa shared_data invece di self.flow_enforcer.blocked
-        """
+        """Enhanced stats with compact, informative output"""
         dp = ev.msg.datapath
         dpid = dp.id
+        
         for stat in ev.msg.body:
             port = stat.port_no
             if port == 4294967294:
@@ -58,21 +66,28 @@ class SDNController(app_manager.RyuApp):
                 
             rx_bps = (stat.rx_bytes * 8) / self.SLEEP_TIME
             tx_bps = (stat.tx_bytes * 8) / self.SLEEP_TIME
-            print(f"[PORT {port}] RX: {rx_bps / 1e6:.2f} Mbps | TX: {tx_bps / 1e6:.2f} Mbps")
             
+            # Calcola throughput totale
+            total_bps = rx_bps + tx_bps
+            
+            # Formato compatto con simboli
+            print(f"[S{dpid}:P{port}] ↓RX {self.format_bps(rx_bps)} ↑TX {self.format_bps(tx_bps)} | Tot: {self.format_bps(total_bps)}")
+            
+            # Policy evaluation
             self.policy_engine.update(dpid, port, rx_bps)
             suspicious, var, threshold_dyn = self.policy_engine.evaluate(dpid, port, rx_bps)
             
+            # Mostra info policy solo se interessante (>1 Mbps o suspicious)
+            if rx_bps > 1e6 or suspicious:
+                print(f"  └─ Threshold: {self.format_bps(threshold_dyn)} | Var: {var:.2e}")
+            
             key = f"{dpid}-{port}"
             
-            # CAMBIATO: usa shared_data invece di self.host_info e self.flow_enforcer.blocked
+            # Blocking logic
             if suspicious and key in shared_data.host_info and not shared_data.is_blocked(key):
                 attacker = shared_data.host_info[key]
-                
-                # CAMBIATO: usa shared_data.block_counts invece di self.flow_enforcer.block_counts
                 shared_data.block_counts[key] = shared_data.block_counts.get(key, 0) + 1
                 num_blocks = shared_data.block_counts[key]
-                
                 unblock_delay = min(2 ** num_blocks * self.BASE_DELAY, self.MAX_DELAY)
                 self.flow_enforcer.block(dp, key, attacker['ip'], unblock_delay)
 
@@ -95,42 +110,20 @@ class SDNController(app_manager.RyuApp):
         dp.send_msg(mod)
         self.logger.info(f"[+] Switch registrato: {dp.id}")
 
-    def block_udp_flow(self, dp, src_ip, dst_ip, dst_port=None):
-        """
-        Blocca traffico UDP con granularità a livello di flusso.
-        Se dst_port è specificata, blocca solo quel flusso specifico.
-        Altrimenti mantiene il comportamento originale (blocco totale).
-        """
+    def block_udp_flow(self, dp, src_ip, dst_ip):
+        """FlowEnforcer chiama questa funzione"""
         parser = dp.ofproto_parser
         ofproto = dp.ofproto
-        
-        # Costruisce il match con granularità opzionale
-        match_fields = {
-            'eth_type': 0x0800,
-            'ip_proto': 17,
-            'ipv4_src': src_ip,
-            'ipv4_dst': dst_ip
-        }
-        
-        # Aggiunge granularità per porta di destinazione se specificata
-        if dst_port:
-            match_fields['udp_dst'] = dst_port
-            
-        match = parser.OFPMatch(**match_fields)
+        match = parser.OFPMatch(eth_type=0x0800, ip_proto=17, ipv4_src=src_ip, ipv4_dst=dst_ip)
         actions = []
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         mod = parser.OFPFlowMod(datapath=dp, priority=20, match=match, instructions=inst)
         dp.send_msg(mod)
-        
-        # Log con informazioni sulla granularità
-        if dst_port:
-            self.logger.info(f"[BLOCKLIST] Flow-specific rule installed on switch {dp.id} for {src_ip} → {dst_ip}:{dst_port}")
-        else:
-            self.logger.info(f"[BLOCKLIST] Rule installed on switch {dp.id} for {src_ip} → {dst_ip}")
+        self.logger.info(f"[BLOCKLIST UPDATE] Flow Rule applied on switch {dp.id} for {src_ip} → {dst_ip}")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
-        """IDENTICO all'originale - gestione learning switch"""
+        """Gestione learning switch"""
         msg = ev.msg
         dp = msg.datapath
         parser = dp.ofproto_parser

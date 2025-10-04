@@ -42,52 +42,65 @@ class SDNController(app_manager.RyuApp):
         with open(path) as f:
             return json.load(f)
 
+    def format_bps(self, bps):
+        """Formatta bandwidth con unità appropriate"""
+        if bps >= 1e9:
+            return f"{bps/1e9:.2f} Gbps"
+        elif bps >= 1e6:
+            return f"{bps/1e6:.2f} Mbps"
+        elif bps >= 1e3:
+            return f"{bps/1e3:.2f} Kbps"
+        else:
+            return f"{bps:.2f} bps"
+
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def port_stats_reply_handler(self, ev):
-        """Enhanced stats with compact, informative output"""
+        """Enhanced stats with host-level policy enforcement"""
         dp = ev.msg.datapath
         dpid = dp.id
-        
+
         for stat in ev.msg.body:
             port = stat.port_no
             if port == 4294967294:
                 continue
-                
+
             rx_bps = (stat.rx_bytes * 8) / self.SLEEP_TIME
             tx_bps = (stat.tx_bytes * 8) / self.SLEEP_TIME
-            
-            # Calcola throughput totale
             total_bps = rx_bps + tx_bps
-            
-            # Formato compatto con simboli - tutto in Mbps
-            print(f"[S{dpid}:P{port}] ↓ RX{rx_bps/1e6:.2f} Mbps - ↑ TX {tx_bps/1e6:.2f} Mbps | Tot: {total_bps/1e6:.2f} Mbps")
-            
-            # Policy evaluation
+
+            print(f"[S{dpid}:P{port}] ↓RX {self.format_bps(rx_bps)} ↑TX {self.format_bps(tx_bps)} | Tot: {self.format_bps(total_bps)}")
+
+            #Aggiorna history per questo (dpid, port)
             self.policy_engine.update(dpid, port, rx_bps)
             suspicious, var, threshold_dyn = self.policy_engine.evaluate(dpid, port, rx_bps)
-            
-            # Mostra info policy solo se interessante (>1 Mbps o suspicious)
+
             if rx_bps > 1e6 or suspicious:
-                print(f"  └─ Threshold: {threshold_dyn/1e6:.2f} Mbps | Var: {var:.2e}")
-            
+                print(f"  └─ Threshold: {self.format_bps(threshold_dyn)} | Var: {var:.2e}")
+
             key = f"{dpid}-{port}"
-            
-            # Blocking logic
-            if suspicious and key in shared_data.host_info and not shared_data.is_blocked(key):
+
+            # Se sospetto, controlla gli host associati
+            if suspicious and key in shared_data.host_info:
                 attacker = shared_data.host_info[key]
-                shared_data.block_counts[key] = shared_data.block_counts.get(key, 0) + 1
-                num_blocks = shared_data.block_counts[key]
-                unblock_delay = min(2 ** num_blocks * self.BASE_DELAY, self.MAX_DELAY)
-                self.flow_enforcer.block(dp, key, attacker['ip'], unblock_delay)
+                attacker_ip = attacker['ip']
+
+                # Blocca solo se non già bloccato
+                if not shared_data.is_blocked((dpid, attacker_ip)):
+                    shared_data.block_counts[(dpid, attacker_ip)] = shared_data.block_counts.get((dpid, attacker_ip), 0) + 1
+                    num_blocks = shared_data.block_counts[(dpid, attacker_ip)]
+                    unblock_delay = min(2 ** num_blocks * self.BASE_DELAY, self.MAX_DELAY)
+
+                #Usa chiave specifica (dpid, ip)
+                    self.flow_enforcer.block(dp, (dpid, attacker_ip), attacker_ip, unblock_delay)
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         """
-        Usa shared_data.datapaths invece di self.datapaths
+        QUASI identico, ma usa shared_data.datapaths invece di self.datapaths
         """
         dp = ev.msg.datapath
         
-        # Salva in shared_data
+        # CAMBIATO: salva in shared_data invece che in self.datapaths
         shared_data.datapaths[dp.id] = dp
         
         parser = dp.ofproto_parser
@@ -99,16 +112,22 @@ class SDNController(app_manager.RyuApp):
         dp.send_msg(mod)
         self.logger.info(f"[+] Switch registrato: {dp.id}")
 
-    def block_udp_flow(self, dp, src_ip, dst_ip):
-        """FlowEnforcer chiama questa funzione"""
+    def block_udp_flow(self, dp, src_ip, dst_ip, dst_port):
+        """Blocca solo UDP da src_ip verso dst_ip:dst_port"""
         parser = dp.ofproto_parser
         ofproto = dp.ofproto
-        match = parser.OFPMatch(eth_type=0x0800, ip_proto=17, ipv4_src=src_ip, ipv4_dst=dst_ip)
+        match = parser.OFPMatch(
+            eth_type=0x0800,
+            ip_proto=17,
+            ipv4_src=src_ip,
+            ipv4_dst=dst_ip,
+            udp_dst=dst_port
+        )
         actions = []
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         mod = parser.OFPFlowMod(datapath=dp, priority=20, match=match, instructions=inst)
         dp.send_msg(mod)
-        self.logger.info(f"[BLOCKLIST] Flow rule applied on S{dp.id}: {src_ip} → {dst_ip}")
+        self.logger.info(f"[BLOCKLIST UPDATE] Rule on S{dp.id} for {src_ip} → {dst_ip}:{dst_port}")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
@@ -134,7 +153,7 @@ class SDNController(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, CONFIG_DISPATCHER])
     def state_change_handler(self, ev):
         """
-        Usa shared_data.datapaths
+        CAMBIATO: usa shared_data.datapaths invece di self.datapaths
         """
         dp = ev.datapath
         if ev.state == MAIN_DISPATCHER:

@@ -8,7 +8,7 @@ class TrafficMonitor:
     def __init__(self, sleep_time=2):
         # Rimuoviamo il riferimento al controller
         self.sleep_time = sleep_time
-        hub.spawn(self.monitor)  # Uguale all'originale
+        hub.spawn(self.monitor)
 
     def monitor(self):
         """TODO"""

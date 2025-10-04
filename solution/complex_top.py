@@ -20,9 +20,9 @@ class Environment(object):
             self.h4 = self.net.addHost('h4', mac='00:00:00:00:00:04', ip='10.0.0.4')
             
             # Host attaccanti distribuiti su switch diversi - in caso di test multi-attacco rimuovere i commenti
-            # self.attacker1 = self.net.addHost('attacker1', mac='00:00:00:00:00:11', ip='10.0.0.11')
-            # self.attacker2 = self.net.addHost('attacker2', mac='00:00:00:00:00:12', ip='10.0.0.12')
-            # self.attacker3 = self.net.addHost('attacker3', mac='00:00:00:00:00:13', ip='10.0.0.13')
+            self.attacker1 = self.net.addHost('attacker1', mac='00:00:00:00:00:11', ip='10.0.0.11')
+            self.attacker2 = self.net.addHost('attacker2', mac='00:00:00:00:00:12', ip='10.0.0.12')
+            self.attacker3 = self.net.addHost('attacker3', mac='00:00:00:00:00:13', ip='10.0.0.13')
             
             info("*** Adding switches\n")
             # 10 switch in struttura ad albero binario perfetto
@@ -46,9 +46,9 @@ class Environment(object):
             self.net.addLink(self.h4, self.s10, bw=10, delay='2ms')   # h4 su s10
             
             # Collegamenti attaccanti - switch - in caso di test multi-attacco rimuovere i commenti
-            # self.net.addLink(self.attacker1, self.s3, bw=10, delay='2ms')   # attacker1 su s3
-            # self.net.addLink(self.attacker2, self.s7, bw=10, delay='2ms')   # attacker2 su s7
-            # self.net.addLink(self.attacker3, self.s8, bw=10, delay='2ms')   # attacker3 su s8
+            self.net.addLink(self.attacker1, self.s3, bw=10, delay='2ms')   # attacker1 su s3
+            self.net.addLink(self.attacker2, self.s7, bw=10, delay='2ms')   # attacker2 su s7
+            self.net.addLink(self.attacker3, self.s8, bw=10, delay='2ms')   # attacker3 su s8
             
             # Collegamenti tra switch - Struttura ad ALBERO BINARIO (larghezza di banda 15)
             # Livello 0-1: Root s1 collegato a s2, s3, s4
@@ -80,7 +80,7 @@ class Environment(object):
             info("*** Level 2: s5, s6, s7\n")
             info("*** Level 3: s8, s9, s10\n")
             info("*** Legitimate hosts: h1(s2), h2(s6), h3(s9), h4(s10)\n")
-            # info("*** Attackers: attacker1(s3), attacker1(s7), attacker1(s8)\n") # - in caso di test multi-attacco rimuovere il commento
+            info("*** Attackers: attacker1(s3), attacker1(s7), attacker1(s8)\n") # - in caso di test multi-attacco rimuovere il commento
             
         except Exception as e:
             info(f"!!! Errore durante l'inizializzazione della rete: {e}\n")

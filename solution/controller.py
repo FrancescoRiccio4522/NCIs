@@ -42,17 +42,6 @@ class SDNController(app_manager.RyuApp):
         with open(path) as f:
             return json.load(f)
 
-    def format_bps(self, bps):
-        """Formatta bandwidth con unità appropriate"""
-        if bps >= 1e9:
-            return f"{bps/1e9:.2f} Gbps"
-        elif bps >= 1e6:
-            return f"{bps/1e6:.2f} Mbps"
-        elif bps >= 1e3:
-            return f"{bps/1e3:.2f} Kbps"
-        else:
-            return f"{bps:.2f} bps"
-
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def port_stats_reply_handler(self, ev):
         """Enhanced stats with compact, informative output"""
@@ -70,8 +59,8 @@ class SDNController(app_manager.RyuApp):
             # Calcola throughput totale
             total_bps = rx_bps + tx_bps
             
-            # Formato compatto con simboli
-            print(f"[S{dpid}:P{port}] ↓RX {self.format_bps(rx_bps)} ↑TX {self.format_bps(tx_bps)} | Tot: {self.format_bps(total_bps)}")
+            # Formato compatto con simboli - tutto in Mbps
+            print(f"[S{dpid}:P{port}] ↓ RX{rx_bps/1e6:.2f} Mbps - ↑ TX {tx_bps/1e6:.2f} Mbps | Tot: {total_bps/1e6:.2f} Mbps")
             
             # Policy evaluation
             self.policy_engine.update(dpid, port, rx_bps)
@@ -79,7 +68,7 @@ class SDNController(app_manager.RyuApp):
             
             # Mostra info policy solo se interessante (>1 Mbps o suspicious)
             if rx_bps > 1e6 or suspicious:
-                print(f"  └─ Threshold: {self.format_bps(threshold_dyn)} | Var: {var:.2e}")
+                print(f"  └─ Threshold: {threshold_dyn/1e6:.2f} Mbps | Var: {var:.2e}")
             
             key = f"{dpid}-{port}"
             
@@ -94,11 +83,11 @@ class SDNController(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         """
-        QUASI identico, ma usa shared_data.datapaths invece di self.datapaths
+        Usa shared_data.datapaths invece di self.datapaths
         """
         dp = ev.msg.datapath
         
-        # CAMBIATO: salva in shared_data invece che in self.datapaths
+        # Salva in shared_data
         shared_data.datapaths[dp.id] = dp
         
         parser = dp.ofproto_parser
@@ -119,7 +108,7 @@ class SDNController(app_manager.RyuApp):
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         mod = parser.OFPFlowMod(datapath=dp, priority=20, match=match, instructions=inst)
         dp.send_msg(mod)
-        self.logger.info(f"[BLOCKLIST UPDATE] Flow Rule applied on switch {dp.id} for {src_ip} → {dst_ip}")
+        self.logger.info(f"[BLOCKLIST] Flow rule applied on S{dp.id}: {src_ip} → {dst_ip}")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
@@ -145,7 +134,7 @@ class SDNController(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, CONFIG_DISPATCHER])
     def state_change_handler(self, ev):
         """
-        CAMBIATO: usa shared_data.datapaths invece di self.datapaths
+        Usa shared_data.datapaths
         """
         dp = ev.datapath
         if ev.state == MAIN_DISPATCHER:

@@ -26,7 +26,7 @@ class PolicyEngine:
         threshold_dyn = max(avg * 1.5, 10e6)
         
         # 🆕 AGGIUNGI: Soglia assoluta per traffico molto alto
-        ABSOLUTE_HIGH_THRESHOLD = 30e6  # 30 Mbps
+        ABSOLUTE_HIGH_THRESHOLD = 70e6  # 30 Mbps
         
         # Suspicious se:
         # 1. Spike + alta varianza (attacco bursty) O

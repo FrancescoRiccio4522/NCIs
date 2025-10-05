@@ -40,31 +40,31 @@ class Environment(object):
             info("*** Adding links\n")
             
             # Collegamenti host legittimi - switch (larghezza di banda 10)
-            self.net.addLink(self.h1, self.s2, bw=10, delay='2ms')    # h1 su s2
-            self.net.addLink(self.h2, self.s6, bw=10, delay='2ms')    # h2 su s6
-            self.net.addLink(self.h3, self.s9, bw=10, delay='2ms')    # h3 su s9
-            self.net.addLink(self.h4, self.s10, bw=10, delay='2ms')   # h4 su s10
+            self.net.addLink(self.h1, self.s2, bw=100, delay='2ms')    # h1 su s2
+            self.net.addLink(self.h2, self.s6, bw=100, delay='2ms')    # h2 su s6
+            self.net.addLink(self.h3, self.s9, bw=100, delay='2ms')    # h3 su s9
+            self.net.addLink(self.h4, self.s10, bw=100, delay='2ms')   # h4 su s10
             
             # Collegamenti attaccanti - switch - in caso di test multi-attacco rimuovere i commenti
-            self.net.addLink(self.attacker1, self.s3, bw=10, delay='2ms')   # attacker1 su s3
-            self.net.addLink(self.attacker2, self.s7, bw=10, delay='2ms')   # attacker2 su s7
-            self.net.addLink(self.attacker3, self.s8, bw=10, delay='2ms')   # attacker3 su s8
+            self.net.addLink(self.attacker1, self.s3, bw=100, delay='2ms')   # attacker1 su s3
+            self.net.addLink(self.attacker2, self.s7, bw=100, delay='2ms')   # attacker2 su s7
+            self.net.addLink(self.attacker3, self.s8, bw=100, delay='2ms')   # attacker3 su s8
             
             # Collegamenti tra switch - Struttura ad ALBERO BINARIO (larghezza di banda 15)
             # Livello 0-1: Root s1 collegato a s2, s3, s4
-            self.net.addLink(self.s1, self.s2, bw=15, delay='25ms')
-            self.net.addLink(self.s1, self.s3, bw=15, delay='25ms')
-            self.net.addLink(self.s1, self.s4, bw=15, delay='25ms')
+            self.net.addLink(self.s1, self.s2, bw=150, delay='25ms')
+            self.net.addLink(self.s1, self.s3, bw=150, delay='25ms')
+            self.net.addLink(self.s1, self.s4, bw=150, delay='25ms')
             
             # Livello 1-2: s2→s5, s3→s6, s4→s7
-            self.net.addLink(self.s2, self.s5, bw=15, delay='25ms')
-            self.net.addLink(self.s3, self.s6, bw=15, delay='25ms')
-            self.net.addLink(self.s4, self.s7, bw=15, delay='25ms')
+            self.net.addLink(self.s2, self.s5, bw=150, delay='25ms')
+            self.net.addLink(self.s3, self.s6, bw=150, delay='25ms')
+            self.net.addLink(self.s4, self.s7, bw=150, delay='25ms')
             
             # Livello 2-3: s5→s8, s6→s9, s7→s10
-            self.net.addLink(self.s5, self.s8, bw=15, delay='25ms')
-            self.net.addLink(self.s6, self.s9, bw=15, delay='25ms')
-            self.net.addLink(self.s7, self.s10, bw=15, delay='25ms')
+            self.net.addLink(self.s5, self.s8, bw=150, delay='25ms')
+            self.net.addLink(self.s6, self.s9, bw=150, delay='25ms')
+            self.net.addLink(self.s7, self.s10, bw=150, delay='25ms')
             
             info("*** Starting network\n")
             self.net.build()

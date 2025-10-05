@@ -28,7 +28,7 @@ class SDNController(app_manager.RyuApp):
         self.logger.setLevel(logging.INFO)
         
         self.mac_to_port = {}  # Manteniamo questo qui perché specifico del learning switch
-        
+        self.prev_bytes = {}  # ← AGGIUNGI QUESTA RIGA
         # Carica host info in shared_data invece che in self
         data = self.load_host_info_json("host_info.json")
         shared_data.host_info = data.get("host_info", {})
@@ -53,8 +53,25 @@ class SDNController(app_manager.RyuApp):
             if port == 4294967294:
                 continue
                 
-            rx_bps = (stat.rx_bytes * 8) / self.SLEEP_TIME
-            tx_bps = (stat.tx_bytes * 8) / self.SLEEP_TIME
+            key_port = (dpid, port)
+
+            # Calcolo differenziale corretto
+            if key_port in self.prev_bytes:
+                rx_bytes_diff = stat.rx_bytes - self.prev_bytes[key_port]['rx']
+                tx_bytes_diff = stat.tx_bytes - self.prev_bytes[key_port]['tx']
+                
+                rx_bps = (rx_bytes_diff * 8) / self.SLEEP_TIME
+                tx_bps = (tx_bytes_diff * 8) / self.SLEEP_TIME
+            else:
+                # Primo campionamento
+                rx_bps = 0
+                tx_bps = 0
+
+            # Salva per il prossimo ciclo
+            self.prev_bytes[key_port] = {
+                'rx': stat.rx_bytes,
+                'tx': stat.tx_bytes
+            }
             
             # Calcola throughput totale
             total_bps = rx_bps + tx_bps

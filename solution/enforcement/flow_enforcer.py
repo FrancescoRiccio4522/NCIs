@@ -13,14 +13,9 @@ class FlowEnforcer:
     """
     
     def __init__(self, controller):
-        # Manteniamo il riferimento al controller per block_udp_flow() e logger
         self.controller = controller
 
     def block(self, dp, key, attacker_ip, unblock_delay):
-        """
-        Usa shared_data.blocked
-        """
-        # PRIMA: self.blocked.add(key)
         shared_data.blocked.add(key)
         
         self.controller.logger.warning(f"{RED}[BLOCK] Connection UDP from {attacker_ip} to 10.0.0.3 | restoring the connection after {unblock_delay}s {RESET}")
@@ -28,9 +23,7 @@ class FlowEnforcer:
         hub.spawn(self.unblock, dp, key, attacker_ip, unblock_delay)
 
     def unblock(self, dp, key, src_ip, delay):
-        """
-        Usa shared_data.blocked
-        """
+    
         hub.sleep(delay)
         parser = dp.ofproto_parser
         ofproto = dp.ofproto
@@ -42,5 +35,4 @@ class FlowEnforcer:
         
         self.controller.logger.info(f"{GREEN}[UNBLOCK] Connection UDP from {src_ip} restored{RESET}")
         
-        # PRIMA: self.blocked.discard(key)  
         shared_data.blocked.discard(key)

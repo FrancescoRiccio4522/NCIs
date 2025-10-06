@@ -28,15 +28,14 @@ class SDNController(app_manager.RyuApp):
         self.logger.setLevel(logging.INFO)
         
         self.mac_to_port = {}  # Manteniamo questo qui perché specifico del learning switch
-        self.prev_bytes = {}  # ← AGGIUNGI QUESTA RIGA
-        # Carica host info in shared_data invece che in self
+        self.prev_bytes = {} 
         data = self.load_host_info_json("host_info.json")
         shared_data.host_info = data.get("host_info", {})
         
         # Inizializza moduli separati
         self.policy_engine = PolicyEngine(var_threshold=self.VAR_THRESHOLD)
-        self.flow_enforcer = FlowEnforcer(self)  # Passa self per logger e block_udp_flow
-        self.traffic_monitor = TrafficMonitor(self.SLEEP_TIME)  # Non passa più self
+        self.flow_enforcer = FlowEnforcer(self) 
+        self.traffic_monitor = TrafficMonitor(self.SLEEP_TIME)  
 
     def load_host_info_json(self, path):
         with open(path) as f:
@@ -44,7 +43,6 @@ class SDNController(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def port_stats_reply_handler(self, ev):
-        """Enhanced stats with compact, informative output"""
         dp = ev.msg.datapath
         dpid = dp.id
         
@@ -55,7 +53,6 @@ class SDNController(app_manager.RyuApp):
                 
             key_port = (dpid, port)
 
-            # Calcolo differenziale corretto
             if key_port in self.prev_bytes:
                 rx_bytes_diff = stat.rx_bytes - self.prev_bytes[key_port]['rx']
                 tx_bytes_diff = stat.tx_bytes - self.prev_bytes[key_port]['tx']
@@ -63,33 +60,26 @@ class SDNController(app_manager.RyuApp):
                 rx_bps = (rx_bytes_diff * 8) / self.SLEEP_TIME
                 tx_bps = (tx_bytes_diff * 8) / self.SLEEP_TIME
             else:
-                # Primo campionamento
                 rx_bps = 0
                 tx_bps = 0
 
-            # Salva per il prossimo ciclo
             self.prev_bytes[key_port] = {
                 'rx': stat.rx_bytes,
                 'tx': stat.tx_bytes
             }
             
-            # Calcola throughput totale
             total_bps = rx_bps + tx_bps
             
-            # Formato compatto con simboli - tutto in Mbps
             print(f"[S{dpid}:P{port}] ↓ RX{rx_bps/1e6:.2f} Mbps - ↑ TX {tx_bps/1e6:.2f} Mbps | Tot: {total_bps/1e6:.2f} Mbps")
             
-            # Policy evaluation
             self.policy_engine.update(dpid, port, rx_bps)
             suspicious, var, threshold_dyn = self.policy_engine.evaluate(dpid, port, rx_bps)
             
-            # Mostra info policy solo se interessante (>1 Mbps o suspicious)
             if rx_bps > 1e6 or suspicious:
                 print(f"  └─ Threshold: {threshold_dyn/1e6:.2f} Mbps | Var: {var:.2e}")
             
             key = f"{dpid}-{port}"
             
-            # Blocking logic
             if suspicious and key in shared_data.host_info and not shared_data.is_blocked(key):
                 attacker = shared_data.host_info[key]
                 shared_data.block_counts[key] = shared_data.block_counts.get(key, 0) + 1
@@ -99,12 +89,8 @@ class SDNController(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
-        """
-        Usa shared_data.datapaths invece di self.datapaths
-        """
         dp = ev.msg.datapath
         
-        # Salva in shared_data
         shared_data.datapaths[dp.id] = dp
         
         parser = dp.ofproto_parser
@@ -117,19 +103,25 @@ class SDNController(app_manager.RyuApp):
         self.logger.info(f"[+] Switch registrato: {dp.id}")
 
     def block_udp_flow(self, dp, src_ip, dst_ip):
-        """FlowEnforcer chiama questa funzione"""
         parser = dp.ofproto_parser
         ofproto = dp.ofproto
         match = parser.OFPMatch(eth_type=0x0800, ip_proto=17, ipv4_src=src_ip, ipv4_dst=dst_ip)
         actions = []
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
-        mod = parser.OFPFlowMod(datapath=dp, priority=20, match=match, instructions=inst)
+        mod = parser.OFPFlowMod(
+            datapath=dp, 
+            priority=100,
+            match=match, 
+            instructions=inst,
+            command=ofproto.OFPFC_ADD,
+            idle_timeout=0,
+            hard_timeout=0
+        )
         dp.send_msg(mod)
         self.logger.info(f"[BLOCKLIST] Flow rule applied on S{dp.id}: {src_ip} → {dst_ip}")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
-        """Gestione learning switch"""
         msg = ev.msg
         dp = msg.datapath
         parser = dp.ofproto_parser
@@ -150,9 +142,6 @@ class SDNController(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, CONFIG_DISPATCHER])
     def state_change_handler(self, ev):
-        """
-        Usa shared_data.datapaths
-        """
         dp = ev.datapath
         if ev.state == MAIN_DISPATCHER:
             shared_data.datapaths[dp.id] = dp

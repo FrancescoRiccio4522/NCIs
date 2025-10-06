@@ -28,16 +28,16 @@ class Environment(object):
 
             info("*** Adding links\n")  
             
-            # Collegamenti host - switch (larghezza di banda 10)            
-            self.net.addLink(self.h1, self.s1, bw = 10, delay = '2ms')
-            self.net.addLink(self.h4, self.s1, bw = 10, delay = '2ms')
-            self.net.addLink(self.h2, self.s2, bw = 10, delay = '2ms')
-            self.net.addLink(self.h3, self.s4, bw = 10, delay = '2ms')
+            # Collegamenti host - switch            
+            self.net.addLink(self.h1, self.s1, bw = 50, delay = '2ms')
+            self.net.addLink(self.h4, self.s1, bw = 50, delay = '2ms')
+            self.net.addLink(self.h2, self.s2, bw = 50, delay = '2ms')
+            self.net.addLink(self.h3, self.s4, bw = 50, delay = '2ms')
 
-            # Collegamenti tra switch (larghezza di banda 15)
-            self.net.addLink(self.s1, self.s3, bw = 15, delay = '25ms') 
-            self.net.addLink(self.s2, self.s3, bw = 15, delay = '25ms')
-            self.net.addLink(self.s4, self.s3, bw = 15, delay = '25ms')
+            # Collegamenti tra switch
+            self.net.addLink(self.s1, self.s3, bw = 50, delay = '25ms') 
+            self.net.addLink(self.s2, self.s3, bw = 50, delay = '25ms')
+            self.net.addLink(self.s4, self.s3, bw = 50, delay = '25ms')
 
             info("*** Starting network\n")
             self.net.build()

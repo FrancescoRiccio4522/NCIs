@@ -17,12 +17,23 @@ class PolicyEngine:
         return self.traffic_history[(dpid, port)]
 
     def evaluate(self, dpid, port, rx_bps):
-        """IDENTICO all'originale"""
         history = self.traffic_history[(dpid, port)]
         if len(history) < 5:
             return False, 0, 0
+        
         avg = statistics.mean(history)
         var = statistics.variance(history)
         threshold_dyn = max(avg * 1.5, 10e6)
-        suspicious = rx_bps > threshold_dyn * 1.2 and var > self.var_threshold
+        
+        # 🆕 AGGIUNGI: Soglia assoluta per traffico molto alto
+        ABSOLUTE_HIGH_THRESHOLD = 70e6  # 30 Mbps
+        
+        # Suspicious se:
+        # 1. Spike + alta varianza (attacco bursty) O
+        # 2. Traffico costantemente sopra soglia assoluta (attacco sustained)
+        spike_and_unstable = rx_bps > threshold_dyn * 1.2 and var > self.var_threshold
+        sustained_high = rx_bps > ABSOLUTE_HIGH_THRESHOLD and avg > ABSOLUTE_HIGH_THRESHOLD
+        
+        suspicious = spike_and_unstable or sustained_high
+        
         return suspicious, var, threshold_dyn

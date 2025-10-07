@@ -1,7 +1,3 @@
-Perfetto — il contenuto del README è chiaro e ben strutturato. Ti propongo una versione leggermente più ordinata, con formattazione Markdown migliorata (titoli coerenti, evidenziazione di comandi e note), e le due sezioni separate con le bandiere 🇮🇹 e 🇬🇧 come richiesto:
-
----
-
 # 🇮🇹 NCIs
 
 ## 🐳 Docker
@@ -181,7 +177,3 @@ sudo ovs-ofctl dump-flows s1
 6. **Topology Sensitivity**
 
    * [ ] Test with a 10-switch topology.
-
----
-
-Vuoi che aggiunga anche una breve **introduzione iniziale** (es. una riga che spiega lo scopo del progetto, tipo “Network Controller Improvements for SDN Experiments”)? Potrebbe rendere il README più completo.

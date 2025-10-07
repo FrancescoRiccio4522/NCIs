@@ -5,11 +5,14 @@ Bisogna buildare due immagini: una per la topologia top.py e una per la topologi
 - sudo docker build -t ryu-top . 
 - sudo docker build -t ryu-complex-top .
 
-Per avviare il controller:
-sudo docker run --rm -it --net=host my-ryu-app
+> [!IMPORTANT]  
+> Ci sono due host_info.json, uno per la topologia semplice (top.py) e uno per quella complessa (complex_top.py). Sostituire con il file .json adatto prima di effettuare il comando build del controller
 
-Per rimuovere l'immagine
-sudo docker system prune -a
+Per avviare il controller:
+- sudo docker run --rm -it --net=host my-ryu-app
+
+Per rimuovere le immagini
+- sudo docker system prune -a
 
 ## Comandi h3 
 ### Connessione UDP al server alla porta di default 5001.
@@ -33,15 +36,15 @@ sudo ovs-ofctl dump-flows s1
 
 ## OBIETTIVI
 1) Over blocking
-   - [ ] Aggiungere Whitelist
+   - [ ] Migliorare la logica di bloccco.
 2) Static Threshold
-   - [ ] Soglia adattiva
+   - [ ] Soglia adattiva dinamica.
 3) Controller-Centric Blocking Decisions
-   - [ ] Aumentare la modularità con strutture dati condivise per permettere a moduli esterni o admin di contribuire alle policies
+   - [ ] Aumentare la modularità con strutture dati condivise per permettere a moduli esterni o admin di contribuire alle policies.
 4) Lack of Modular Detection and Mitigation Design
-   - [ ] Separazione tra le varie operazioni e funzionalità del controller
+   - [ ] Separazione tra le varie operazioni e funzionalità del controller.
 5) Inflexible Blocking/Unblocking Policy
-   - [ ] Exponential backoff
+   - [ ] Exponential backoff.
 6) Topology Sensitivity
-   - [ ] Test con una topologia con 10 switches
+   - [ ] Test con una topologia con 10 switches.
 

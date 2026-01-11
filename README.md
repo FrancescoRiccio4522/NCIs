@@ -1,4 +1,4 @@
-# 🇮🇹 Network and Cloud Infrastructures Project Security
+# 🇮🇹 Network and Cloud Infrastructures Security Project
 
 ## 🐳 Docker
 
@@ -89,7 +89,7 @@ sudo ovs-ofctl dump-flows s1
 
 ---
 
-# 🇬🇧 Network and Cloud Infrastructures Project Security
+# 🇬🇧 Network and Cloud Infrastructures Security Project
 
 ## 🐳 Docker
 
